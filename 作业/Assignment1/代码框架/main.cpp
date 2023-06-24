@@ -44,16 +44,27 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
 
+    //projection <<
+    //    0.3f, 0.0f, 0.0f, 0.0f,
+    //    0.0f, 0.3f, 0.0f, 0.0f,
+    //    0.0f, 0.0f, 0.3f, 0.0f,
+    //    0.0f, 0.0f, 0.0f, 1.0f
+    //    ;
+    //return projection;
+
+    eye_fov = eye_fov / 180.0f * MY_PI;
     // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
     projection <<
         1.0f / aspect_ratio / std::tan(eye_fov / 2), 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f / std::tan(eye_fov / 2), 0.0f, 0.0f,
-        0.0f, 0.0f, zNear / (zFar - zNear), 1.0f,
+        0.0f, 0.0f, zFar / (zFar - zNear), 1.0f,
         0.0f, 0.0f, -zFar * zNear / (zFar - zNear), 0.0f
         ;
     projection.transposeInPlace();
+
+    std::cout << projection << std::endl;
     return projection;
 }
 
@@ -96,7 +107,7 @@ int main(int argc, const char** argv)
 
     rst::rasterizer r(700, 700);
 
-    Eigen::Vector3f eye_pos = {0, 0, 5};
+    Eigen::Vector3f eye_pos = {0, 0, -9};
 
     std::vector<Eigen::Vector3f> pos{{2, 0, -2}, {0, 2, -2}, {-2, 0, -2}};
 
@@ -131,6 +142,15 @@ int main(int argc, const char** argv)
         //r.set_model(get_rotation({0.0f, 1.0f, 0.0f}, angle));
         r.set_view(get_view_matrix(eye_pos));
         r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+
+        std::cout << "model matrix" << std::endl;
+        std::cout << get_model_matrix(angle) << std::endl;
+
+        std::cout << "view matrix" << std::endl;
+        std::cout << get_view_matrix(eye_pos) << std::endl;
+
+        std::cout << "view model matrix" << std::endl;
+        std::cout << get_view_matrix(eye_pos) * get_model_matrix(angle) << std::endl;
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
 
