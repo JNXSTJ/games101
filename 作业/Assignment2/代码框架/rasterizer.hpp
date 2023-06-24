@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <eigen3/Eigen/Eigen>
+#include <eigen-3.4.0/Eigen/Eigen>
 #include <algorithm>
 #include "global.hpp"
 #include "Triangle.hpp"

@@ -31,8 +31,22 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float zFar)
 {
     // TODO: Copy-paste your implementation from the previous assignment.
-    Eigen::Matrix4f projection;
 
+    // Students will implement this function
+    eye_fov = eye_fov / 180.0f * MY_PI;
+
+    Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
+
+    // TODO: Implement this function
+    // Create the projection matrix for the given parameters.
+    // Then return it.
+    projection <<
+        1.0f / aspect_ratio / std::tan(eye_fov / 2), 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f / std::tan(eye_fov / 2), 0.0f, 0.0f,
+        0.0f, 0.0f, zFar / (zFar - zNear), 1.0f,
+        0.0f, 0.0f, -zFar * zNear / (zFar - zNear), 0.0f
+        ;
+    projection.transposeInPlace();
     return projection;
 }
 
@@ -55,12 +69,12 @@ int main(int argc, const char** argv)
 
     std::vector<Eigen::Vector3f> pos
             {
-                    {2, 0, -2},
-                    {0, 2, -2},
-                    {-2, 0, -2},
-                    {3.5, -1, -5},
-                    {2.5, 1.5, -5},
-                    {-1, 0.5, -5}
+                    {2, 0, 12},
+                    {0, 2, 12},
+                    {-2, 0, 12},
+                    {3.5, -1, 15},
+                    {2.5, 1.5, 15},
+                    {-1, 0.5, 15}
             };
 
     std::vector<Eigen::Vector3i> ind

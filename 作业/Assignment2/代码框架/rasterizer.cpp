@@ -43,6 +43,17 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 static bool insideTriangle(int x, int y, const Vector3f* _v)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
+    Vector3f t(x, y, 0);
+    Vector3f a(_v[0]);
+    Vector3f b(_v[1]);
+    Vector3f c(_v[2]);
+    a.z() = 0;
+    b.z() = 0;
+    c.z() = 0;
+    float t1 = (b - a).cross(t - a).z();
+    float t2 = (c - b).cross(t - b).z();
+    float t3 = (a - c).cross(t - c).z();
+    return t1 >= 0 && t2 >= 0 && t3 >= 0 || t1 <= 0 && t2 <= 0 && t3 <= 0;
 }
 
 static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector3f* v)
@@ -116,6 +127,36 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     //z_interpolated *= w_reciprocal;
 
     // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
+    
+    // find bounding box
+    float min_x = width, min_y = height, max_x = 0.0f, max_y = 0.0f;
+    for (int i = 0; i < 3; i++)
+    {
+        min_x = std::min(min_x, t.v[i].x());
+        max_x = std::max(max_x, t.v[i].x());
+        min_y = std::min(min_y, t.v[i].y());
+        max_y = std::max(max_y, t.v[i].y());
+        std::cout << t.v[i] << std::endl;
+    }
+
+    for (int x = min_x; x <= max_x; x++)
+    {
+        for (int y = min_y; y <= max_y; y++)
+        {
+            if (insideTriangle(x, y, t.v))
+            {
+                auto [alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
+				float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+				float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+				z_interpolated *= w_reciprocal;
+                int id = get_index(x, y);
+                if (z_interpolated >= depth_buf[id]) continue;
+                depth_buf[id] = z_interpolated;
+                Eigen::Vector3f point{ 1.0f * x, 1.0f * y, 0.0f };
+                set_pixel(point, t.getColor());
+            }
+        }
+    }
 }
 
 void rst::rasterizer::set_model(const Eigen::Matrix4f& m)
