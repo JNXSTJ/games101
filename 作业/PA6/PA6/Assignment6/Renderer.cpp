@@ -42,7 +42,6 @@ void Renderer::Render(const Scene& scene)
             auto inter = scene.bvh->Intersect(ray);
             if (inter.happened)
             {
-                //framebuffer[m++] = 
                 auto color = inter.m->getColor();
                 auto hitPoint = inter.coords;
                 auto N = inter.normal;
