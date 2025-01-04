@@ -35,6 +35,61 @@ void Renderer::Render(const Scene& scene)
             // *scale*, and x (horizontal) variable with the *imageAspectRatio*
 
             // Don't forget to normalize this direction!
+            Vector3f dir = Vector3f(x, y, -1.0); // Don't forget to normalize this direction!
+            dir = normalize(dir);
+
+            Ray ray(eye_pos, dir);
+            auto inter = scene.bvh->Intersect(ray);
+            if (inter.happened)
+            {
+                //framebuffer[m++] = 
+                auto color = inter.m->getColor();
+                auto hitPoint = inter.coords;
+                auto N = inter.normal;
+				Vector2f st; // st coordinates
+                // [comment]
+                // We use the Phong illumation model int the default case. The phong model
+                // is composed of a diffuse and a specular reflection component.
+                // [/comment]
+                Vector3f lightAmt = 0, specularColor = 0;
+                Vector3f shadowPointOrig = (dotProduct(ray.direction, N) < 0) ?
+                                           hitPoint + N * EPSILON :
+                                           hitPoint - N * EPSILON;
+                // [comment]
+                // Loop over all lights in the scene and sum their contribution up
+                // We also apply the lambert cosine law
+                // [/comment]
+                for (uint32_t i = 0; i < scene.get_lights().size(); ++i)
+                {
+                    auto area_ptr = dynamic_cast<AreaLight*>(scene.get_lights()[i].get());
+                    if (area_ptr)
+                    {
+                        // Do nothing for this assignment
+                    }
+                    else
+                    {
+                        Vector3f lightDir = scene.get_lights()[i]->position - hitPoint;
+                        // square of the distance between hitPoint and the light
+                        float lightDistance2 = dotProduct(lightDir, lightDir);
+                        lightDir = normalize(lightDir);
+                        float LdotN = std::max(0.f, dotProduct(lightDir, inter.normal));
+                        Object *shadowHitObject = nullptr;
+                        float tNearShadow = kInfinity;
+                        // is the point in shadow, and is the nearest occluding object closer to the object than the light itself?
+                        bool inShadow = scene.bvh->Intersect(Ray(shadowPointOrig, lightDir)).happened;
+                        lightAmt += (1 - inShadow) * scene.get_lights()[i]->intensity * LdotN;
+                        Vector3f reflectionDirection = scene.reflect(-lightDir, N);
+                        specularColor += powf(std::max(0.f, -dotProduct(reflectionDirection, ray.direction)),
+                                              inter.m->specularExponent) * scene.get_lights()[i]->intensity;
+                    }
+                }
+                auto hitColor = lightAmt * (inter.obj->evalDiffuseColor(st) * inter.m->Kd + specularColor * inter.m->Ks);
+                framebuffer[m++] = hitColor;
+            }
+            else
+            {
+                framebuffer[m++] = scene.backgroundColor;
+            }
 
         }
         UpdateProgress(j / (float)scene.height);

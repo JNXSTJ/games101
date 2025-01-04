@@ -232,11 +232,15 @@ inline Intersection Triangle::getIntersection(Ray ray)
     t_tmp = dotProduct(e2, qvec) * det_inv;
 
     // TODO find ray triangle intersection
+	inter.happened=true;
 
+	inter.coords = Vector3f(ray.origin + ray.direction * t_tmp);
+    inter.normal = normal;
+	inter.m = this->m;
+	inter.obj = this;
+	inter.distance = std::abs(t_tmp);
 
-
-
-    return inter;
+	return inter;
 }
 
 inline Vector3f Triangle::evalDiffuseColor(const Vector2f&) const
