@@ -85,11 +85,13 @@ Vector3f shader(Intersection& inter, const Ray& ray, const Scene* scn)
 	if (get_random_float() < scn->RussianRoulette)
 	{
 		auto wi = inter.m->sample(ray.direction, inter.normal);
+        wi = normalize(wi);
 		auto _inter = scn->intersect(Ray(inter.coords, wi));
 		if (_inter.happened && !_inter.m->hasEmission())
 		{
-			Vector3f L_indir = shader(_inter, Ray(inter.coords, wi), scn) * _inter.m->eval(ray.direction, wi, inter.normal) * crossProduct(wi, _inter.normal)
-				/_inter.m->pdf(wi, ray.direction, _inter.normal) /scn->RussianRoulette;
+			Vector3f L_indir = shader(_inter, Ray(inter.coords, wi), scn) * inter.m->eval(ray.direction, wi, inter.normal) * crossProduct(wi, inter.normal)
+				/ inter.m->pdf(ray.direction, wi, inter.normal) / scn->RussianRoulette;
+            ret += L_indir;
 		}
 	}
 	return ret;
