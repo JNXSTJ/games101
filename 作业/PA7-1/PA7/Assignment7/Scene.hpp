@@ -28,7 +28,9 @@ public:
     {}
 
     void Add(Object *object) { objects.push_back(object); }
-    void Add(std::unique_ptr<Light> light) { lights.push_back(std::move(light)); }
+    void Add(std::unique_ptr<Light> light) { 
+        lights.push_back(std::move(light)); 
+    }
 
     const std::vector<Object*>& get_objects() const { return objects; }
     const std::vector<std::unique_ptr<Light> >&  get_lights() const { return lights; }

@@ -3,6 +3,7 @@
 //
 
 #include "Scene.hpp"
+#include <functional>
 
 
 void Scene::buildBVH() {
@@ -57,8 +58,55 @@ bool Scene::trace(
     return (*hitObject != nullptr);
 }
 
+Vector3f shader(Intersection& inter, const Ray& ray, const Scene* scn)
+{
+	Vector3f ret;
+	Intersection pos;
+	float pdf;
+	scn->sampleLight(pos, pdf);
+	auto orig = inter.coords;
+	auto dir = pos.coords - orig;
+	dir = normalize(dir);
+	Ray _ray(orig, dir);
+	auto _inter = scn->intersect(_ray);
+	if (_inter.happened && _inter.m->hasEmission())
+	{
+		Vector3f L_i = pos.emit;
+		auto fr = inter.m->eval(ray.direction, dir, inter.normal);
+		float cos_theta = dotProduct(inter.normal, dir);
+		float cos_theta_x = -dotProduct(pos.normal, dir);
+		Vector3f x = inter.coords;
+		Vector3f p = pos.coords;
+		auto L_dir = L_i * fr * cos_theta * cos_theta_x / dotProduct(x - p, x - p) / pdf;
+
+		ret += L_dir;
+	}
+
+	if (get_random_float() < scn->RussianRoulette)
+	{
+		auto wi = inter.m->sample(ray.direction, inter.normal);
+		auto _inter = scn->intersect(Ray(inter.coords, wi));
+		if (_inter.happened && !_inter.m->hasEmission())
+		{
+			Vector3f L_indir = shader(_inter, Ray(inter.coords, wi), scn) * _inter.m->eval(ray.direction, wi, inter.normal) * crossProduct(wi, _inter.normal)
+				/_inter.m->pdf(wi, ray.direction, _inter.normal) /scn->RussianRoulette;
+		}
+	}
+	return ret;
+}
+
 // Implementation of Path Tracing
-Vector3f Scene::castRay(const Ray &ray, int depth) const
+Vector3f Scene::castRay(const Ray& ray, int depth) const
 {
     // TO DO Implement Path Tracing Algorithm here
+    auto inter = intersect(ray);
+    if (!inter.happened) return this->backgroundColor;
+    if (inter.m->hasEmission())
+    {
+        return inter.m->getEmission();
+    }
+    else
+    {
+        return shader(inter, ray, this);
+    }
 }

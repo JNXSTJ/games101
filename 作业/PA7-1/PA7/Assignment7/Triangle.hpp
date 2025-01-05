@@ -254,6 +254,18 @@ inline Intersection Triangle::getIntersection(Ray ray)
 
     // TODO find ray triangle intersection
 
+    inter.happened = true;
+    inter.coords = Vector3f(ray.origin + ray.direction * t_tmp);
+    inter.normal = normal;
+    inter.m = this->m;
+    inter.obj = this;
+    inter.distance = std::abs(t_tmp);
+    inter.emit = this->m->getEmission();
+    if (this->m->hasEmission())
+    {
+        int i = 0;
+    }
+
     return inter;
 }
 
